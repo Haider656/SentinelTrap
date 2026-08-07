@@ -1,6 +1,6 @@
 # SentinelTrap AI — Autonomous Deception Intelligence Platform
 
-**Honeytokens & Active Defense hackathon project.**
+**Honeytokens Engine and Backend API module.**
 
 This module provides the **Flask backend, SQLite database, REST APIs, and Honeytoken Engine** for SentinelTrap AI.
 
