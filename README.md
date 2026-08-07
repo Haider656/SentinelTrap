@@ -1,198 +1,114 @@
-# SentinelTrap AI — Autonomous Deception Intelligence Platform
+# 🛡️ SentinelTrap
 
-**Honeytokens Engine and Backend API module.**
+**SentinelTrap** is a cybersecurity platform that leverages **honeytokens** to detect unauthorized credential access and demonstrate automated incident response. The project simulates real-world credential theft scenarios, detects malicious activity, and provides an interactive dashboard for monitoring threats.
 
-This module provides the **Flask backend, SQLite database, REST APIs, and Honeytoken Engine** for SentinelTrap AI.
+---
 
-## Project Structure
+## 🚀 Features
+
+- 🍯 Honeytoken generation and management
+- 🚨 Real-time honeytoken access detection
+- 🛡️ Simulated active defense (block attacker & rotate credentials)
+- 📊 Interactive dashboard with threat visualization
+- 🤖 AI-powered security recommendations
+- 📖 REST APIs with Swagger documentation
+
+---
+
+## 📂 Repository Structure
 
 ```text
 SentinelTrap/
-├── app.py                    # Flask application entry point
-├── config.py                 # SQLite/database configuration
-├── models.py                 # SQLAlchemy database models
-├── routes.py                 # REST API endpoints
-├── honeytoken_engine.py      # Honeytoken generation
-├── requirements.txt          # Python dependencies
+│
 ├── README.md
-├── .gitignore
-└── instance/
-    └── sentinaltrap.db       # Local database, not committed
+├── docs/
+│   ├── architecture.md
+│   ├── api-spec.md
+│   └── screenshots/
+│
+├── backend/
+│   ├── honeytoken-engine/
+│   │   └── README.md
+│   │
+│   └── detection-defense/
+│       └── README.md
+│
+└── frontend/
+    └── README.md
 ```
 
-## 1. Open the Project in VS Code
+---
 
-Clone/download the repository and open the **SentinelTrap** folder in VS Code.
+## 📦 Modules
 
-Open the terminal:
+### 🍯 Honeytoken Engine
+Responsible for generating and managing fake credentials (AWS keys, API keys, employee credentials, etc.) and exposing APIs for honeytoken management.
 
-```text
-Terminal → New Terminal
-```
+**Documentation:** `backend/honeytoken-engine/README.md`
 
-## 2. Create a Virtual Environment
+---
 
-```powershell
-python -m venv venv
-```
+### 🛡️ Detection & Active Defense
+Detects honeytoken access, generates alerts, simulates attacker blocking, and rotates compromised credentials.
 
-Activate on Windows:
+**Documentation:** `backend/detection-defense/README.md`
 
-```powershell
-venv\Scripts\Activate.ps1
-```
+---
 
-macOS/Linux:
+### 📊 Dashboard & AI
+Provides a web dashboard for monitoring security events, visualizing alerts, displaying risk scores, and presenting AI-generated recommendations.
+
+**Documentation:** `frontend/README.md`
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+- FastAPI
+- Python
+- SQLAlchemy
+- SQLite
+- Pydantic
+- Uvicorn
+
+### Frontend
+- React
+- Tailwind CSS
+- Axios
+
+### Tools
+- Git & GitHub
+- Postman
+- Swagger UI
+- Docker *(optional)*
+- MITRE ATT&CK *(mapping)*
+
+---
+
+## ▶️ Getting Started
+
+Clone the repository:
 
 ```bash
-source venv/bin/activate
+git clone https://github.com/Haider656/SentinelTrap.git
+cd SentinelTrap
 ```
 
-## 3. Install Dependencies
+Refer to each module's README for setup and execution instructions.
 
-```bash
-pip install -r requirements.txt
-```
+---
 
-Main dependencies:
+## 👥 Team Structure
 
-```text
-Flask
-Flask-SQLAlchemy
-```
+| Team | Module | Responsibility |
+|------|--------|----------------|
+| Team 1 | Honeytoken Engine | Generate and manage honeytokens |
+| Team 2 | Detection & Active Defense | Detect attacks and automate incident response |
+| Team 3 | Dashboard & AI | Build the frontend dashboard and AI insights |
 
-## 4. Initialize the Database
+---
 
-The SQLite database and required tables are created automatically when the application starts.
+## 📜 License
 
-```bash
-python app.py
-```
-
-Database location:
-
-```text
-instance/sentinaltrap.db
-```
-
-## 5. Run the Backend
-
-```bash
-python app.py
-```
-
-API:
-
-```text
-http://127.0.0.1:5000
-```
-
-### Health Check
-
-```text
-GET /health
-```
-
-Expected response:
-
-```json
-{
-  "status": "online",
-  "service": "SentinalTrap Backend",
-  "database": "SQLite"
-}
-```
-
-## 6. Honeytoken API
-
-| Method | Endpoint               | Purpose             |
-| ------ | ---------------------- | ------------------- |
-| GET    | `/`                    | Backend status      |
-| GET    | `/health`              | Health check        |
-| POST   | `/generate-token`      | Generate honeytoken |
-| GET    | `/tokens`              | Get all tokens      |
-| GET    | `/tokens/<id>`         | Get one token       |
-| GET    | `/stats`               | Token statistics    |
-| POST   | `/tokens/<id>/trigger` | Trigger a token     |
-
-### Generate a Honeytoken
-
-```http
-POST /generate-token
-```
-
-Request:
-
-```json
-{
-  "type": "AWS"
-}
-```
-
-Supported types:
-
-```text
-AWS
-API_KEY
-EMPLOYEE
-ENV
-```
-
-Generated tokens are fake demo credentials designed for the deception environment and are not connected to real services.
-
-## 7. Honeytoken Engine
-
-`honeytoken_engine.py` generates randomized demo:
-
-* AWS-style keys
-* API keys
-* Employee credentials
-* `.env` configuration values
-
-The Python `secrets` module is used for random token generation.
-
-## 8. Database
-
-The project uses **SQLite + Flask-SQLAlchemy**.
-
-The `Honeytoken` model stores:
-
-* Token ID
-* Token type
-* Value
-* Description
-* Status
-* Creation time
-* Last triggered time
-
-The database is automatically created locally and should **not** be committed to GitHub.
-
-## 9. Git & Security
-
-`.gitignore` excludes:
-
-```gitignore
-venv/
-__pycache__/
-*.pyc
-instance/
-*.db
-.env
-```
-
-Do not commit real credentials, API keys, passwords, or other secrets.
-
-## Future Enhancements
-
-* Real-time attacker monitoring
-* Security alerts
-* Threat intelligence
-* IP/request tracking
-* AI-based attack analysis
-* Attack timeline
-* Incident reports
-* Automated containment
-* Frontend dashboard integration
-
-**Module:** Core Backend & Honeytoken Engine
-**Project:** SentinelTrap AI
+This project was developed as part of a cybersecurity hackathon for educational and demonstration purposes.
