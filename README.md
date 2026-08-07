@@ -1,148 +1,198 @@
 # SentinelTrap AI — Autonomous Deception Intelligence Platform
 
-Honeytokens & Active Defense hackathon project. This README covers the
-**database module** (owned by the backend/database team): setting up the
-project in VS Code, initializing SQLite, seeding demo data, and running the
-Flask backend.
+**Honeytokens Engine and Backend API module.**
 
-## Project structure
+This module provides the **Flask backend, SQLite database, REST APIs, and Honeytoken Engine** for SentinelTrap AI.
 
-```
+## Project Structure
+
+```text
 SentinelTrap/
-├── backend/
-│   ├── app.py              # Flask app entry point (application factory)
-│   ├── database.py         # ALL SQL lives here — connection + CRUD helpers
-│   ├── init_db.py          # Creates security.db and all tables
-│   ├── seed_db.py          # Inserts demo honeytokens, attacks, defense, reports
-│   ├── requirements.txt
-│   ├── routes/             # Flask blueprints (import from database.py only)
-│   ├── models/             # Schema reference / optional dataclasses
-│   ├── utils/              # Shared helpers (no direct SQL)
-│   └── security.db         # Created automatically — not committed to git
-├── frontend/                # Frontend team's code
-├── docs/                    # Architecture docs, diagrams, reports
+├── app.py                    # Flask application entry point
+├── config.py                 # SQLite/database configuration
+├── models.py                 # SQLAlchemy database models
+├── routes.py                 # REST API endpoints
+├── honeytoken_engine.py      # Honeytoken generation
+├── requirements.txt          # Python dependencies
+├── README.md
 ├── .gitignore
-└── README.md
+└── instance/
+    └── sentinaltrap.db       # Local database, not committed
 ```
 
-## 1. Open the project in VS Code
+## 1. Open the Project in VS Code
 
-1. Clone or download the repository.
-2. Open the `SentinelTrap/` root folder in VS Code (`File > Open Folder...`).
-3. Install the official **Python extension** (Microsoft) if you don't
-   already have it — VS Code will prompt you.
-4. Open a terminal inside VS Code: `` Terminal > New Terminal `` (or
-   `` Ctrl+` ``). All commands below run from this terminal.
+Clone/download the repository and open the **SentinelTrap** folder in VS Code.
 
-## 2. Create a virtual environment
+Open the terminal:
 
-From the **repository root**:
+```text
+Terminal → New Terminal
+```
 
-```bash
-cd backend
+## 2. Create a Virtual Environment
+
+```powershell
 python -m venv venv
 ```
 
-Activate it:
+Activate on Windows:
 
-- **Windows (PowerShell):** `venv\Scripts\Activate.ps1`
-- **Windows (cmd.exe):** `venv\Scripts\activate.bat`
-- **macOS / Linux:** `source venv/bin/activate`
+```powershell
+venv\Scripts\Activate.ps1
+```
 
-In VS Code, you can also press `Ctrl+Shift+P` → **"Python: Select
-Interpreter"** → choose the interpreter inside `backend/venv`.
+macOS/Linux:
 
-You should see `(venv)` appear at the start of your terminal prompt once
-it's active.
+```bash
+source venv/bin/activate
+```
 
-## 3. Install dependencies
-
-With the virtual environment active:
+## 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 4. Initialize the database
+Main dependencies:
 
-This creates `backend/security.db` and every table (`honeytokens`,
-`attack_logs`, `active_defense`, `ai_reports`). Safe to re-run at any time —
-it will never overwrite existing tables.
-
-```bash
-python init_db.py
+```text
+Flask
+Flask-SQLAlchemy
 ```
 
-You should see:
+## 4. Initialize the Database
 
-```
-[init_db] All tables created successfully at: .../backend/security.db
-```
-
-## 5. Seed the database with demo data
-
-Populates the database with fake AWS keys, API keys, employee credentials,
-`.env` secrets, sample attack logs, defense actions, and AI reports — enough
-to demo the dashboard immediately.
-
-```bash
-python seed_db.py
-```
-
-## 6. Run the Flask backend
+The SQLite database and required tables are created automatically when the application starts.
 
 ```bash
 python app.py
 ```
 
-The API starts on `http://127.0.0.1:5000`. Confirm it's wired up correctly:
+Database location:
+
+```text
+instance/sentinaltrap.db
+```
+
+## 5. Run the Backend
 
 ```bash
-curl http://127.0.0.1:5000/api/health
+python app.py
+```
+
+API:
+
+```text
+http://127.0.0.1:5000
+```
+
+### Health Check
+
+```text
+GET /health
 ```
 
 Expected response:
 
 ```json
 {
-  "status": "ok",
-  "service": "SentinelTrap AI backend",
-  "database": ".../backend/security.db"
+  "status": "online",
+  "service": "SentinalTrap Backend",
+  "database": "SQLite"
 }
 ```
 
-## Using the database module from other parts of the app
+## 6. Honeytoken API
 
-Nobody outside `database.py` should write raw SQL. Route files, AI
-report-generation code, and utility scripts should just import the helper
-functions they need:
+| Method | Endpoint               | Purpose             |
+| ------ | ---------------------- | ------------------- |
+| GET    | `/`                    | Backend status      |
+| GET    | `/health`              | Health check        |
+| POST   | `/generate-token`      | Generate honeytoken |
+| GET    | `/tokens`              | Get all tokens      |
+| GET    | `/tokens/<id>`         | Get one token       |
+| GET    | `/stats`               | Token statistics    |
+| POST   | `/tokens/<id>/trigger` | Trigger a token     |
 
-```python
-from database import (
-    create_honeytoken,
-    get_all_honeytokens,
-    get_honeytoken_by_id,
-    update_honeytoken_status,
-    delete_honeytoken,
-    create_attack_log,
-    get_all_attack_logs,
-    delete_attack_log,
-    create_defense_action,
-    get_all_defense_actions,
-    create_ai_report,
-    get_all_ai_reports,
-)
+### Generate a Honeytoken
+
+```http
+POST /generate-token
 ```
 
-Every function returns plain Python dicts/lists (JSON-serializable out of
-the box) or `None`/`False` on failure — never raw `sqlite3.Row` objects, and
-every write uses parameterized queries, so it's safe to pass user-supplied
-input straight through.
+Request:
 
-## Notes
+```json
+{
+  "type": "AWS"
+}
+```
 
-- All seeded "secrets" (AWS keys, API keys, credentials, `.env` values) are
-  entirely fake placeholders generated for the demo — they are decoys by
-  design and are not connected to any real service.
-- `security.db` is excluded from git via `.gitignore`. Each teammate should
-  run `init_db.py` + `seed_db.py` locally after cloning.
+Supported types:
+
+```text
+AWS
+API_KEY
+EMPLOYEE
+ENV
+```
+
+Generated tokens are fake demo credentials designed for the deception environment and are not connected to real services.
+
+## 7. Honeytoken Engine
+
+`honeytoken_engine.py` generates randomized demo:
+
+* AWS-style keys
+* API keys
+* Employee credentials
+* `.env` configuration values
+
+The Python `secrets` module is used for random token generation.
+
+## 8. Database
+
+The project uses **SQLite + Flask-SQLAlchemy**.
+
+The `Honeytoken` model stores:
+
+* Token ID
+* Token type
+* Value
+* Description
+* Status
+* Creation time
+* Last triggered time
+
+The database is automatically created locally and should **not** be committed to GitHub.
+
+## 9. Git & Security
+
+`.gitignore` excludes:
+
+```gitignore
+venv/
+__pycache__/
+*.pyc
+instance/
+*.db
+.env
+```
+
+Do not commit real credentials, API keys, passwords, or other secrets.
+
+## Future Enhancements
+
+* Real-time attacker monitoring
+* Security alerts
+* Threat intelligence
+* IP/request tracking
+* AI-based attack analysis
+* Attack timeline
+* Incident reports
+* Automated containment
+* Frontend dashboard integration
+
+**Module:** Core Backend & Honeytoken Engine
+**Project:** SentinelTrap AI
