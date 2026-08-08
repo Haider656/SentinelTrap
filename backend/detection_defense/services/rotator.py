@@ -1,9 +1,6 @@
 """
-rotator.py
-----------
 Handles rotation of compromised honeytokens: the old value is retired
-and marked "Rotated", and a brand-new fake credential is generated and
-activated in its place (so the honeytoken can keep being used as a lure).
+and a brand-new fake credential is generated and activated in its place.
 """
 
 from sqlalchemy.orm import Session
@@ -15,7 +12,7 @@ from utils.utils import generate_fake_credential
 def rotate_token(db: Session, token: models.Honeytoken) -> dict:
     """
     Rotates a compromised honeytoken by generating a new fake credential
-    and updating the database record.
+    and activating it.
 
     Args:
         db: Active database session.
@@ -24,15 +21,25 @@ def rotate_token(db: Session, token: models.Honeytoken) -> dict:
     Returns:
         A dict with the old token value, new token value, and new status.
     """
+
     old_value = token.value
 
+    # Generate a new unique fake credential
     new_value = generate_fake_credential(token.type)
-    # Ensure the newly generated value doesn't collide with an existing one
-    while db.query(models.Honeytoken).filter(models.Honeytoken.value == new_value).first():
+
+    # Make sure the new value doesn't already exist
+    while (
+        db.query(models.Honeytoken)
+        .filter(models.Honeytoken.value == new_value)
+        .first()
+    ):
         new_value = generate_fake_credential(token.type)
 
+    # Replace the compromised credential
     token.value = new_value
-    token.status = "Rotated"
+
+    # IMPORTANT: new credential is active
+    token.status = "Active"
 
     db.commit()
     db.refresh(token)

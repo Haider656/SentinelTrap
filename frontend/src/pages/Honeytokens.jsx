@@ -1,147 +1,79 @@
-import Sidebar from "../components/Sidebar";
-import Navbar from "../components/Navbar";
-import HoneytokenCard from "../components/HoneytokenCard";
-import StatusBadge from "../components/StatusBadge";
-
-const tokens = [
-  {
-    name: "Prod DB Honeytoken",
-    type: "Database",
-    status: "Active",
-    lastTriggered: "8 minutes ago",
-    owner: "DB Team",
-  },
-  {
-    name: "AWS Key Canary",
-    type: "Cloud API",
-    status: "Dormant",
-    lastTriggered: "2 days ago",
-    owner: "Cloud Ops",
-  },
-  {
-    name: "Shared Drive Decoy",
-    type: "File Share",
-    status: "Active",
-    lastTriggered: "12 minutes ago",
-    owner: "Infra",
-  },
-  {
-    name: "Service Account Token",
-    type: "Credential",
-    status: "Suspended",
-    lastTriggered: "Never",
-    owner: "SecOps",
-  },
-];
-
-const tableData = [
-  {
-    token: "Finance API Key",
-    type: "API Key",
-    status: "Active",
-    lastTriggered: "5 min ago",
-  },
-  {
-    token: "RDP Honeypot",
-    type: "Network",
-    status: "Active",
-    lastTriggered: "13 min ago",
-  },
-  {
-    token: "GCP Service Token",
-    type: "Cloud API",
-    status: "Dormant",
-    lastTriggered: "1 day ago",
-  },
-  {
-    token: "Legacy Admin Password",
-    type: "Credential",
-    status: "Suspended",
-    lastTriggered: "Never",
-  },
-];
+import { useEffect, useState } from "react";
+import api from "../services/api";
 
 function Honeytokens() {
+  const [tokens, setTokens] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchHoneytokens();
+  }, []);
+
+  const fetchHoneytokens = async () => {
+    try {
+      const response = await api.get("/honeytokens");
+      setTokens(response.data);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load honeytokens.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="layout-shell">
-      <Sidebar />
-      <main className="content-shell">
-        <Navbar title="Honeytokens" />
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#0F172A",
+        color: "white",
+        padding: "30px",
+      }}
+    >
+      <h1>🍯 Honeytokens</h1>
+      <p style={{ color: "#94A3B8" }}>
+        Monitor deployed deception tokens.
+      </p>
 
-        <section className="page-header-row">
-          <div>
-            <p className="eyebrow">Deception inventory</p>
-            <h2>Honeytoken assets overview</h2>
-          </div>
-          <button type="button" className="primary-btn">
-            Add new token
-          </button>
-        </section>
+      {loading && <p>Loading honeytokens...</p>}
 
-        <section className="honeytoken-grid">
-          {tokens.map((item) => (
-            <HoneytokenCard
-              key={item.name}
-              name={item.name}
-              type={item.type}
-              status={item.status}
-              lastTriggered={item.lastTriggered}
-              actionLabel="Review"
-            />
-          ))}
-        </section>
+      {error && <p style={{ color: "#EF4444" }}>{error}</p>}
 
-        <section className="panel panel-table">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Honeytoken catalog</p>
-              <h2>Active deception assets</h2>
+      {!loading && !error && (
+        <div style={{ marginTop: "25px" }}>
+          {tokens.map((token) => (
+            <div
+              key={token.id}
+              style={{
+                background: "#1E293B",
+                padding: "20px",
+                borderRadius: "12px",
+                marginBottom: "15px",
+                borderLeft: "4px solid #3B82F6",
+              }}
+            >
+              <h2>{token.type}</h2>
+
+              <p>
+                <strong>ID:</strong> {token.id}
+              </p>
+
+              <p>
+                <strong>Status:</strong>{" "}
+                <span style={{ color: "#22C55E" }}>
+                  {token.status}
+                </span>
+              </p>
+
+              <p>
+                <strong>Created:</strong>{" "}
+                {new Date(token.created_at).toLocaleString()}
+              </p>
             </div>
-            <span className="badge badge-primary">4 total</span>
-          </div>
-
-          <div className="table-shell">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Token Name</th>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Last Triggered</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {tableData.map((row) => (
-                  <tr key={row.token}>
-                    <td>{row.token}</td>
-                    <td>{row.type}</td>
-                    <td>
-                      <StatusBadge
-                        variant={
-                          row.status === "Active"
-                            ? "success"
-                            : row.status === "Suspended"
-                            ? "danger"
-                            : "muted"
-                        }
-                      >
-                        {row.status}
-                      </StatusBadge>
-                    </td>
-                    <td>{row.lastTriggered}</td>
-                    <td>
-                      <button type="button" className="ghost-btn small">
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </main>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,129 +1,246 @@
+import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
-import StatusBadge from "../components/StatusBadge";
-
-const alerts = [
-  {
-    id: "A-001",
-    alert: "Suspicious SSH brute force",
-    severity: "Critical",
-    source: "203.0.113.12",
-    timestamp: "4 min ago",
-    status: "Open",
-  },
-  {
-    id: "A-002",
-    alert: "API key misuse detected",
-    severity: "High",
-    source: "54.223.11.9",
-    timestamp: "18 min ago",
-    status: "Investigating",
-  },
-  {
-    id: "A-003",
-    alert: "Credential leak pattern",
-    severity: "Medium",
-    source: "172.16.0.55",
-    timestamp: "38 min ago",
-    status: "Acknowledged",
-  },
-  {
-    id: "A-004",
-    alert: "Red team decoy hit",
-    severity: "Low",
-    source: "10.4.7.19",
-    timestamp: "1 hr ago",
-    status: "Resolved",
-  },
-];
+import api from "../services/api";
 
 function Alerts() {
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+  loadAlerts();
+
+  const interval = setInterval(() => {
+    loadAlerts();
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, []);
+
+  async function loadAlerts() {
+    try {
+      console.log("Fetching alerts...");
+
+      const response = await api.get("/alerts");
+
+      console.log("Alerts received:", response.data);
+
+      setAlerts(response.data);
+    } catch (err) {
+      console.error("ALERT API ERROR:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const critical = alerts.filter(
+    (a) => a.severity?.toLowerCase() === "critical"
+  ).length;
+
+  const high = alerts.filter(
+    (a) => a.severity?.toLowerCase() === "high"
+  ).length;
+
   return (
-    <div className="layout-shell">
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        background: "#0F172A",
+        color: "white",
+      }}
+    >
       <Sidebar />
-      <main className="content-shell">
-        <Navbar title="Alerts" />
 
-        <section className="page-header-row">
-          <div>
-            <p className="eyebrow">Threat operations</p>
-            <h2>Alert feed & incident details</h2>
-          </div>
-          <button type="button" className="primary-btn">
-            Export report
-          </button>
-        </section>
+      <main
+        style={{
+          flex: 1,
+          padding: "30px",
+        }}
+      >
+        <Navbar />
 
-        <section className="panel panel-alerts-overview">
-          <div className="alert-summary">
-            <div>
-              <p>Total Alerts</p>
-              <strong>24</strong>
-            </div>
-            <div>
-              <p>Critical</p>
-              <strong>6</strong>
-            </div>
-            <div>
-              <p>High</p>
-              <strong>11</strong>
-            </div>
-            <div>
-              <p>Resolved</p>
-              <strong>7</strong>
-            </div>
-          </div>
-        </section>
+        <div style={{ marginTop: "30px" }}>
+          <p
+            style={{
+              color: "#60A5FA",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+            }}
+          >
+            Threat Operations
+          </p>
 
-        <section className="panel panel-table">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Alerts table</p>
-              <h2>Latest security events</h2>
-            </div>
-            <span className="badge badge-soft">Real-time</span>
-          </div>
+          <h1 style={{ fontSize: "36px" }}>
+            Alert Feed & Incident Details
+          </h1>
+        </div>
 
-          <div className="table-shell">
-            <table className="data-table">
+        {/* SUMMARY */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "20px",
+            marginTop: "30px",
+          }}
+        >
+          <SummaryCard
+            title="Total Alerts"
+            value={loading ? "..." : alerts.length}
+          />
+
+          <SummaryCard
+            title="Critical"
+            value={loading ? "..." : critical}
+          />
+
+          <SummaryCard
+            title="High"
+            value={loading ? "..." : high}
+          />
+
+          <SummaryCard
+            title="Blocked"
+            value={
+              loading
+                ? "..."
+                : alerts.filter(
+                    (a) => a.status?.toLowerCase() === "blocked"
+                  ).length
+            }
+          />
+        </div>
+
+        {/* ALERTS */}
+        <div
+          style={{
+            background: "#1E293B",
+            borderRadius: "15px",
+            padding: "25px",
+            marginTop: "30px",
+            overflowX: "auto",
+          }}
+        >
+          <h2>🚨 Latest Security Events</h2>
+
+          {loading && (
+            <p style={{ color: "#94A3B8" }}>
+              Loading alerts...
+            </p>
+          )}
+
+          {error && (
+            <p style={{ color: "#EF4444" }}>
+              Backend error: {error}
+            </p>
+          )}
+
+          {!loading && !error && alerts.length === 0 && (
+            <p style={{ color: "#94A3B8" }}>
+              No security alerts detected.
+            </p>
+          )}
+
+          {!loading && alerts.length > 0 && (
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                marginTop: "20px",
+              }}
+            >
               <thead>
-                <tr>
-                  <th>Alert</th>
-                  <th>Severity</th>
-                  <th>Source IP</th>
-                  <th>Timestamp</th>
-                  <th>Status</th>
+                <tr style={{ color: "#94A3B8" }}>
+                  <th style={cellStyle}>TOKEN</th>
+                  <th style={cellStyle}>SEVERITY</th>
+                  <th style={cellStyle}>ATTACKER</th>
+                  <th style={cellStyle}>IP ADDRESS</th>
+                  <th style={cellStyle}>ACTION</th>
+                  <th style={cellStyle}>STATUS</th>
+                  <th style={cellStyle}>TIME</th>
                 </tr>
               </thead>
+
               <tbody>
-                {alerts.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.alert}</td>
-                    <td>
-                      <StatusBadge
-                        variant={
-                          item.severity === "Critical"
-                            ? "danger"
-                            : item.severity === "High"
-                            ? "warning"
-                            : item.severity === "muted"
-                        }
-                      >
-                        {item.severity}
-                      </StatusBadge>
+                {alerts.map((alert) => (
+                  <tr key={alert.id}>
+                    <td style={cellStyle}>
+                      {alert.token_type}
                     </td>
-                    <td>{item.source}</td>
-                    <td>{item.timestamp}</td>
-                    <td>{item.status}</td>
+
+                    <td style={cellStyle}>
+                      <span
+                        style={{
+                          color:
+                            alert.severity === "Critical"
+                              ? "#EF4444"
+                              : alert.severity === "High"
+                              ? "#F59E0B"
+                              : "#22C55E",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {alert.severity}
+                      </span>
+                    </td>
+
+                    <td style={cellStyle}>
+                      {alert.attacker}
+                    </td>
+
+                    <td style={cellStyle}>
+                      {alert.ip_address}
+                    </td>
+
+                    <td style={cellStyle}>
+                      {alert.action}
+                    </td>
+
+                    <td style={cellStyle}>
+                      {alert.status}
+                    </td>
+
+                    <td style={cellStyle}>
+                      {new Date(
+                        alert.timestamp
+                      ).toLocaleString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        </section>
+          )}
+        </div>
       </main>
     </div>
   );
 }
+
+function SummaryCard({ title, value }) {
+  return (
+    <div
+      style={{
+        background: "#1E293B",
+        borderRadius: "12px",
+        padding: "25px",
+      }}
+    >
+      <p style={{ color: "#94A3B8" }}>{title}</p>
+
+      <strong style={{ fontSize: "36px" }}>
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+const cellStyle = {
+  padding: "18px 12px",
+  textAlign: "left",
+  borderBottom: "1px solid #334155",
+};
 
 export default Alerts;

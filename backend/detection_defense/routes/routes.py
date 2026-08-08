@@ -103,3 +103,33 @@ def list_honeytokens(db: Session = Depends(get_db)):
         }
         for t in tokens
     ]
+
+
+@router.post("/honeytokens", tags=["Honeytokens"])
+def create_honeytoken(
+    token_type: str = "API Key",
+    db: Session = Depends(get_db)
+):
+    """Creates a new active honeytoken for demo/testing."""
+
+    from utils.utils import generate_fake_credential
+
+    value = generate_fake_credential(token_type)
+
+    token = models.Honeytoken(
+        type=token_type,
+        value=value,
+        status="Active"
+    )
+
+    db.add(token)
+    db.commit()
+    db.refresh(token)
+
+    return {
+        "id": token.id,
+        "type": token.type,
+        "value": token.value,
+        "status": token.status,
+        "created_at": token.created_at,
+    }

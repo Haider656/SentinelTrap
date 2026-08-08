@@ -1,119 +1,161 @@
+import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import StatCard from "../components/StatCard";
 import AlertCard from "../components/AlertCard";
-
-const stats = [
-  {
-    title: "Total Honeytokens",
-    value: "125",
-    color: "#3B82F6",
-    accent: "Monitoring active decoys",
-  },
-  {
-    title: "Active Alerts",
-    value: "8",
-    color: "#EF4444",
-    accent: "High-priority detections",
-  },
-  {
-    title: "Detection Rate",
-    value: "97%",
-    color: "#22C55E",
-    accent: "Successful coverage",
-  },
-  {
-    title: "Threat Level",
-    value: "HIGH",
-    color: "#F59E0B",
-    accent: "Elevated response posture",
-  },
-];
-
-const recentAlerts = [
-  {
-    title: "AWS Key Triggered",
-    severity: "Critical",
-    time: "2 minutes ago",
-    source: "us-east-1 / AWS IAM",
-    detail: "Unauthorized access detected on exposed key.",
-  },
-  {
-    title: "Database Honeytoken Triggered",
-    severity: "High",
-    time: "15 minutes ago",
-    source: "10.12.34.9",
-    detail: "Honeytoken credential exfiltration attempt.",
-  },
-  {
-    title: "Honeytoken File Accessed",
-    severity: "Low",
-    time: "1 hour ago",
-    source: "172.16.0.21",
-    detail: "Decoy file opened from internal host.",
-  },
-];
+import api from "../services/api";
 
 function Dashboard() {
+  const [tokens, setTokens] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+  loadDashboard();
+
+  const interval = setInterval(() => {
+    loadDashboard();
+  }, 3000);
+
+  return () => clearInterval(interval);
+}, []);
+
+  const loadDashboard = async () => {
+    try {
+      const [tokenResponse, alertResponse] = await Promise.all([
+        api.get("/honeytokens"),
+        api.get("/alerts"),
+      ]);
+
+      setTokens(tokenResponse.data);
+      setAlerts(alertResponse.data);
+    } catch (error) {
+      console.error("Dashboard API error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="layout-shell">
+    <div
+      style={{
+        display: "flex",
+        background: "#0F172A",
+        minHeight: "100vh",
+      }}
+    >
       <Sidebar />
-      <main className="content-shell">
-        <Navbar title="Dashboard" />
 
-        <section className="stats-grid">
-          {stats.map((stat) => (
-            <StatCard
-              key={stat.title}
-              title={stat.title}
-              value={stat.value}
-              color={stat.color}
-              accent={stat.accent}
-            />
-          ))}
-        </section>
+      <div style={{ flex: 1, padding: "30px" }}>
+        <Navbar />
 
-        <section className="dashboard-grid">
-          <article className="panel panel-graph">
-            <div className="panel-header">
-              <div>
-                <p className="eyebrow">Attack Trend</p>
-                <h2>Suspicious activity heatmap</h2>
+        {/* STAT CARDS */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "20px",
+          }}
+        >
+          <StatCard
+            title="Honeytokens"
+            value={loading ? "..." : tokens.length}
+            color="#3B82F6"
+          />
+
+          <StatCard
+            title="Active Alerts"
+            value={loading ? "..." : alerts.length}
+            color="#EF4444"
+          />
+
+          <StatCard
+            title="Detection Rate"
+            value="97%"
+            color="#22C55E"
+          />
+
+          <StatCard
+            title="Threat Level"
+            value={alerts.length > 0 ? "HIGH" : "LOW"}
+            color={alerts.length > 0 ? "#EF4444" : "#22C55E"}
+          />
+        </div>
+
+        {/* LOWER SECTION */}
+        <div
+          style={{
+            marginTop: "30px",
+            display: "grid",
+            gridTemplateColumns: "2fr 1fr",
+            gap: "20px",
+          }}
+        >
+          {/* ATTACK TREND */}
+          <div
+            style={{
+              background: "#1F2937",
+              color: "white",
+              padding: "20px",
+              borderRadius: "12px",
+            }}
+          >
+            <h2>📊 Attack Trend</h2>
+
+            <div
+              style={{
+                height: "250px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                color: "#9CA3AF",
+              }}
+            >
+              No attacks detected yet
+            </div>
+          </div>
+
+          {/* ALERTS */}
+          <div>
+            <h2 style={{ color: "white" }}>
+              🚨 Recent Alerts
+            </h2>
+
+            {alerts.length === 0 ? (
+              <div
+                style={{
+                  background: "#1F2937",
+                  padding: "20px",
+                  borderRadius: "10px",
+                  color: "#94A3B8",
+                }}
+              >
+                No security alerts yet.
               </div>
-              <span className="badge badge-primary">Live</span>
-            </div>
-            <div className="chart-placeholder">
-              <div className="chart-axis" />
-              <div className="chart-line" />
-              <div className="chart-dot dot-1" />
-              <div className="chart-dot dot-2" />
-              <div className="chart-dot dot-3" />
-              <div className="chart-dot dot-4" />
-              <div className="chart-dot dot-5" />
-            </div>
-            <div className="chart-footer">
-              <span>Threat events</span>
-              <span>Last 24 hours</span>
-            </div>
-          </article>
-
-          <article className="panel panel-alerts">
-            <div className="panel-header">
-              <div>
-                <p className="eyebrow">Recent Alerts</p>
-                <h2>Latest security events</h2>
-              </div>
-              <span className="badge badge-soft">8 new</span>
-            </div>
-
-            <div className="alert-list">
-              {recentAlerts.map((alert) => (
-                <AlertCard key={alert.title} {...alert} />
-              ))}
-            </div>
-          </article>
-        </section>
-      </main>
+            ) : (
+              alerts.slice(0, 5).map((alert, index) => (
+                <AlertCard
+                  key={alert.id || index}
+                  title={
+                    alert.message ||
+                    alert.title ||
+                    "Security Alert"
+                  }
+                  severity={
+                    alert.severity ||
+                    "High"
+                  }
+                  time={
+                    alert.created_at ||
+                    alert.timestamp ||
+                    "Recently"
+                  }
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
