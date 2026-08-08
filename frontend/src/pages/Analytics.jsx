@@ -7,21 +7,21 @@ function Analytics() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const loadAlerts = async () => {
-    try {
-      const response = await api.get("/alerts");
-
-      console.log("Analytics alerts:", response.data);
-
-      setAlerts(response.data);
-    } catch (error) {
-      console.error("Analytics error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadAlerts = async () => {
+      try {
+        const response = await api.get("/alerts");
+
+        console.log("Analytics alerts:", response.data);
+
+        setAlerts(response.data);
+      } catch (error) {
+        console.error("Analytics error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadAlerts();
 
     const interval = setInterval(() => {
@@ -57,10 +57,6 @@ function Analytics() {
 
   const blocked = alerts.filter(
     (a) => a.status?.toLowerCase() === "blocked"
-  ).length;
-
-  const open = alerts.filter(
-    (a) => a.status?.toLowerCase() === "open"
   ).length;
 
   const detectionRate =

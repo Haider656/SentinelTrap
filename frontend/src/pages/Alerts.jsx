@@ -9,31 +9,31 @@ function Alerts() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-  loadAlerts();
+    const loadAlerts = async () => {
+      try {
+        console.log("Fetching alerts...");
 
-  const interval = setInterval(() => {
+        const response = await api.get("/alerts");
+
+        console.log("Alerts received:", response.data);
+
+        setAlerts(response.data);
+      } catch (err) {
+        console.error("ALERT API ERROR:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadAlerts();
-  }, 3000);
 
-  return () => clearInterval(interval);
-}, []);
+    const interval = setInterval(() => {
+      loadAlerts();
+    }, 3000);
 
-  async function loadAlerts() {
-    try {
-      console.log("Fetching alerts...");
-
-      const response = await api.get("/alerts");
-
-      console.log("Alerts received:", response.data);
-
-      setAlerts(response.data);
-    } catch (err) {
-      console.error("ALERT API ERROR:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+    return () => clearInterval(interval);
+  }, []);
 
   const critical = alerts.filter(
     (a) => a.severity?.toLowerCase() === "critical"

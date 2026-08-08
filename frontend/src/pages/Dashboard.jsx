@@ -11,30 +11,30 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  loadDashboard();
+    const loadDashboard = async () => {
+      try {
+        const [tokenResponse, alertResponse] = await Promise.all([
+          api.get("/honeytokens"),
+          api.get("/alerts"),
+        ]);
 
-  const interval = setInterval(() => {
+        setTokens(tokenResponse.data);
+        setAlerts(alertResponse.data);
+      } catch (error) {
+        console.error("Dashboard API error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadDashboard();
-  }, 3000);
 
-  return () => clearInterval(interval);
-}, []);
+    const interval = setInterval(() => {
+      loadDashboard();
+    }, 3000);
 
-  const loadDashboard = async () => {
-    try {
-      const [tokenResponse, alertResponse] = await Promise.all([
-        api.get("/honeytokens"),
-        api.get("/alerts"),
-      ]);
-
-      setTokens(tokenResponse.data);
-      setAlerts(alertResponse.data);
-    } catch (error) {
-      console.error("Dashboard API error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div
